@@ -1,7 +1,7 @@
 const { createApp, ref, onMounted } = Vue;
 
 // ★ここに手順1で取得したGASのウェブアプリのURLを貼り付けてください
-const GAS_API_URL = "https://script.google.com/macros/s/xxxxxx/exec";
+const GAS_API_URL = "https://script.googleusercontent.com/macros/echo?user_content_key=AUkAhnSns7qd6hx3spv8NoVmZ_E4t4yKMiEVvIPXDgNWXpfN8AgEQRRFyIkf7tcU1Ebr3eYNyjMzBvjnN-gENSeTBjT9fLMFP77JL0exxvkls6YtdIg0AWkzcg8kFuehEEnjbbqVslNO6dnaM3rK2FuhwxkFJivC3ALvDJRVmDLzEfflo2ksVKs7BHuGA2TJsTdIREovEzDeCRwk0aHBY3t6vP6J_XZSrnpwNhHbGVbErnpMzps8Ka0i_K3VEmxfEGbcRqVl8N-oCOkxMuv6lYNB3uuUoV2Lpg&lib=M216abY7my7u-09KgvWLSY3EjpuJkTYHO";
 
 createApp({
   setup() {
