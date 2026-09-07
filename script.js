@@ -11,7 +11,6 @@ createApp({
     const editingId = ref(null);
     const editForm = ref({ id: null, title: '', content: '' });
 
-    // JSONPを使った安全な読み込み
     const fetchTemplates = () => {
       isLoading.value = true;
       window.handleResponse = (data) => {
@@ -45,7 +44,9 @@ createApp({
 
     const copyText = async (text) => {
       try {
-        await navigator.clipboard.writeText(text);
+        // データ内に "\n"（文字列）が混ざっていても本物の改行に置換してコピーする
+        const formattedText = String(text).replace(/\\n/g, '\n');
+        await navigator.clipboard.writeText(formattedText);
         showToast('コピーしました！');
       } catch (err) {
         alert('コピーに失敗しました。');
@@ -64,44 +65,37 @@ createApp({
       editingId.value = null;
     };
 
-// CORSやリダイレクト制限を完全に回避してPOSTするための隠しフォーム送信テクニック
-const saveToSpreadsheet = (dataToSave) => {
-  return new Promise((resolve) => {
-    // 1. ページ内に隠しiframeを作成（レスポンス画面を表示させないため）
-    let iframe = document.getElementById('hidden-iframe');
-    if (!iframe) {
-      iframe = document.createElement('iframe');
-      iframe.id = 'hidden-iframe';
-      iframe.name = 'hidden-iframe';
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-    }
+    const saveToSpreadsheet = (dataToSave) => {
+      return new Promise((resolve) => {
+        let iframe = document.getElementById('hidden-iframe');
+        if (!iframe) {
+          iframe = document.createElement('iframe');
+          iframe.id = 'hidden-iframe';
+          iframe.name = 'hidden-iframe';
+          iframe.style.display = 'none';
+          document.body.appendChild(iframe);
+        }
 
-    // 2. 隠しformを動的に作成
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = GAS_API_URL;
-    form.target = 'hidden-iframe'; // 送信結果を隠しiframeに向ける
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = GAS_API_URL;
+        form.target = 'hidden-iframe';
 
-    // 3. データをinputとして埋め込む
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = 'data';
-    input.value = JSON.stringify(dataToSave);
-    form.appendChild(input);
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'data';
+        input.value = JSON.stringify(dataToSave);
+        form.appendChild(input);
 
-    document.body.appendChild(form);
-    
-    // 4. 送信を実行し、要素を掃除する
-    form.submit();
-    form.remove();
+        document.body.appendChild(form);
+        form.submit();
+        form.remove();
 
-    // フォーム送信は通信完了が取れないため、1秒後に成功として処理を進める
-    setTimeout(() => {
-      resolve();
-    }, 1000);
-  });
-};
+        setTimeout(() => {
+          resolve();
+        }, 1000);
+      });
+    };
 
     const saveEdit = async () => {
       if(!editForm.value.title || !editForm.value.content) {
@@ -120,7 +114,6 @@ const saveToSpreadsheet = (dataToSave) => {
       try {
         await saveToSpreadsheet(templates.value);
         showToast('スプレッドシートに保存しました');
-        // 少し待ってから最新データを再読み込み
         setTimeout(fetchTemplates, 1500);
       } catch (err) {
         alert("保存に失敗しました。");
