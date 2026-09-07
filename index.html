@@ -1,26 +1,99 @@
-<!-- グリッドを強制的に横3列にする (grid-cols-3) -->
-<div class="grid grid-cols-3 gap-4">
-  <div v-for="(tpl, index) in templates" :key="tpl.id" class="bg-white p-4 rounded shadow flex flex-col justify-between">
-    
-    <!-- 上部：タイトル ＋ 小さめのコピーボタン ＋ 編集ボタン をスッキリ配置 -->
-    <div>
-      <div class="flex items-center justify-between mb-2 gap-1">
-        <h2 class="font-bold text-sm truncate">{{ tpl.title }}</h2>
-        <div class="flex items-center gap-1 shrink-0">
-          <!-- コンパクトなコピーボタン -->
-          <button @click="copyText(tpl.content)" class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600">
-            コピー
-          </button>
-          <!-- 編集ボタン -->
-          <button @click="startEdit(tpl)" class="px-2 py-1 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300">
-            編集
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>メールテンプレート管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f3f4f6; color: #374151; font-family: 'Helvetica Neue', Arial, sans-serif; }
+    .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+    .fade-enter-from, .fade-leave-to { opacity: 0; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="app" class="min-h-screen pb-6">
+    <header class="bg-gray-900 text-white shadow-md sticky top-0 z-10">
+      <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-12 flex items-center justify-between">
+        <h1 class="text-base font-bold tracking-wider"><i class="fa-regular fa-envelope mr-2"></i>メールテンプレート</h1>
+        <div class="flex items-center space-x-2">
+          <button @click="fetchTemplates" class="text-gray-300 hover:text-white text-xs" title="データを更新"><i class="fa-solid fa-rotate"></i></button>
+          <button @click="addNewTemplate" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-md shadow transition duration-200 text-xs font-semibold">
+            <i class="fa-solid fa-plus mr-1"></i> 新規作成
           </button>
         </div>
       </div>
-      
-      <!-- 本文プレビューなど -->
-      <p class="text-xs text-gray-600 whitespace-pre-wrap line-clamp-4">{{ tpl.content }}</p>
-    </div>
+    </header>
 
+    <transition name="fade">
+      <div v-if="toastMsg" class="fixed top-16 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg z-50 flex items-center text-sm w-max">
+        <i class="fa-solid fa-check-circle text-green-400 mr-2"></i> {{ toastMsg }}
+      </div>
+    </transition>
+
+    <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 mt-4">
+      <div v-if="isLoading" class="text-center py-10 text-gray-500 text-sm">
+        <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i>
+        <p>スプレッドシートから読み込み中...</p>
+      </div>
+
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div v-for="(tpl, index) in templates" :key="tpl.id" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
+          
+          <div v-if="editingId !== tpl.id" class="flex flex-col h-full">
+            <div class="bg-gray-50 px-3 py-2 border-b border-gray-200 flex justify-between items-center">
+              <h2 class="text-sm font-bold text-gray-800 truncate">{{ tpl.title }}</h2>
+              <button @click="startEdit(tpl)" class="text-gray-400 hover:text-indigo-500 transition p-1" title="編集">
+                <i class="fa-solid fa-pen text-xs"></i>
+              </button>
+            </div>
+            
+            <div class="p-2.5 flex-grow">
+              <div class="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed h-32 overflow-y-auto bg-gray-50 p-2 rounded border border-gray-100">{{ tpl.content }}</div>
+            </div>
+            
+            <div class="px-2.5 pb-2.5">
+              <button @click="copyText(tpl.content)" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md shadow-sm transition duration-200 flex justify-center items-center text-sm">
+                <i class="fa-regular fa-copy mr-1.5"></i> コピー
+              </button>
+            </div>
+          </div>
+
+          <div v-else class="flex flex-col h-full bg-indigo-50">
+            <div class="px-3 pt-3 pb-1.5">
+              <label class="block text-[10px] font-bold text-indigo-700 mb-0.5">タイトル</label>
+              <input v-model="editForm.title" type="text" class="w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-1.5 text-sm" placeholder="メールの種類">
+            </div>
+            
+            <div class="px-3 pb-1.5 flex-grow">
+              <label class="block text-[10px] font-bold text-indigo-700 mb-0.5">本文</label>
+              <textarea v-model="editForm.content" class="w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2 h-32 text-xs leading-relaxed" placeholder="メールの本文を入力"></textarea>
+            </div>
+            
+            <div class="px-3 pb-3 pt-1 flex justify-between items-center space-x-2">
+              <button @click="deleteTemplate(index)" class="text-red-500 hover:bg-red-100 p-1.5 rounded transition" title="削除">
+                <i class="fa-solid fa-trash text-sm"></i>
+              </button>
+              <div class="flex space-x-2">
+                <button @click="cancelEdit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1.5 px-3 rounded text-xs transition duration-200">キャンセル</button>
+                <button @click="saveEdit" :disabled="isSaving" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1.5 px-4 rounded shadow-sm text-xs transition duration-200">
+                  <span v-if="isSaving"><i class="fa-solid fa-spinner fa-spin"></i></span>
+                  <span v-else>保存</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </main>
   </div>
-</div>
+
+  <script src="script.js"></script>
+</body>
+</html>
