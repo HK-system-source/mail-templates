@@ -114,7 +114,7 @@ createApp({
       try {
         await saveToSpreadsheet(templates.value);
         showToast('スプレッドシートに保存しました');
-        setTimeout(fetchTemplates, 1500);
+        setTimeout(fetchTemplates, 3000);
       } catch (err) {
         alert("保存に失敗しました。");
       } finally {
@@ -130,7 +130,7 @@ createApp({
         try {
           await saveToSpreadsheet(templates.value);
           showToast('削除しました');
-          setTimeout(fetchTemplates, 1500);
+          setTimeout(fetchTemplates, 3000);
         } catch (err) {
           alert("削除に失敗しました。");
         } finally {
