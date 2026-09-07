@@ -11,7 +11,7 @@ createApp({
     const editingId = ref(null);
     const editForm = ref({ id: null, title: '', content: '' });
 
-    const fetchTemplates = () => {
+const fetchTemplates = () => {
       isLoading.value = true;
       window.handleResponse = (data) => {
         templates.value = data;
@@ -25,7 +25,8 @@ createApp({
 
       const script = document.createElement('script');
       script.id = 'jsonp-script';
-      script.src = `${GAS_API_URL}?callback=handleResponse`;
+      // ?t=... をつけてブラウザやGoogle側のキャッシュ（古いデータ）を強制回避する
+      script.src = `${GAS_API_URL}?callback=handleResponse&t=${Date.now()}`;
       script.onerror = () => {
         isLoading.value = false;
         alert("データの読み込みに失敗しました。");
