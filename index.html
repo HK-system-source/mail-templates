@@ -18,9 +18,9 @@
 </head>
 <body>
   <div id="app" class="min-h-screen pb-6">
-    <!-- ヘッダーを画面幅いっぱいに伸ばす -->
+    <!-- ヘッダーを完全に画面端から端まで伸ばす（max-wなどの制限を撤廃） -->
     <header class="bg-gray-900 text-white shadow-md sticky top-0 z-10 w-full">
-      <div class="w-full max-w-7xl mx-auto px-6 h-12 flex items-center justify-between">
+      <div class="w-full px-6 h-12 flex items-center justify-between">
         <h1 class="text-base font-bold tracking-wider"><i class="fa-regular fa-envelope mr-2"></i>メールテンプレート</h1>
         <div class="flex items-center space-x-2">
           <button @click="fetchTemplates" class="text-gray-300 hover:text-white text-xs" title="データを更新"><i class="fa-solid fa-rotate"></i></button>
@@ -37,8 +37,8 @@
       </div>
     </transition>
 
-    <!-- メインコンテンツ部分はPCでは中央に最大幅で配置、スマホでは横スクロール -->
-    <main class="w-[1000px] md:w-full md:max-w-7xl md:mx-auto px-6 mt-4 pb-4">
+    <!-- メインコンテンツ部分は必要に応じて幅を広げる（PC時は最大幅を約1500px相当の max-w-[1500px] に拡張） -->
+    <main class="w-[1000px] md:w-full md:max-w-[1500px] md:mx-auto px-6 mt-4 pb-4">
       <div v-if="isLoading" class="text-center py-10 text-gray-500 text-sm">
         <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-3"></i>
         <p>スプレッドシートから読み込み中...</p>
