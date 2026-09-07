@@ -64,21 +64,44 @@ createApp({
       editingId.value = null;
     };
 
-    // 保存処理（CORSエラーを避けるため no-cors モードを利用）
-    const saveToSpreadsheet = async (dataToSave) => {
-      // データの文字列をURLエンコードしてPOSTする（プリフライトを回避）
-      const formData = new URLSearchParams();
-      formData.append("data", JSON.stringify(dataToSave));
+// CORSやリダイレクト制限を完全に回避してPOSTするための隠しフォーム送信テクニック
+const saveToSpreadsheet = (dataToSave) => {
+  return new Promise((resolve) => {
+    // 1. ページ内に隠しiframeを作成（レスポンス画面を表示させないため）
+    let iframe = document.getElementById('hidden-iframe');
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'hidden-iframe';
+      iframe.name = 'hidden-iframe';
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+    }
 
-      await fetch(GAS_API_URL, {
-        method: "POST",
-        mode: "no-cors", // CORSのエラーを強制回避するテクニック
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: formData
-      });
-    };
+    // 2. 隠しformを動的に作成
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = GAS_API_URL;
+    form.target = 'hidden-iframe'; // 送信結果を隠しiframeに向ける
+
+    // 3. データをinputとして埋め込む
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'data';
+    input.value = JSON.stringify(dataToSave);
+    form.appendChild(input);
+
+    document.body.appendChild(form);
+    
+    // 4. 送信を実行し、要素を掃除する
+    form.submit();
+    form.remove();
+
+    // フォーム送信は通信完了が取れないため、1秒後に成功として処理を進める
+    setTimeout(() => {
+      resolve();
+    }, 1000);
+  });
+};
 
     const saveEdit = async () => {
       if(!editForm.value.title || !editForm.value.content) {
