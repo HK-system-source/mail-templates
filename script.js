@@ -11,17 +11,31 @@ createApp({
     const editingId = ref(null);
     const editForm = ref({ id: null, title: '', content: '' });
 
-    const fetchTemplates = async () => {
+    // JSONPを使ってCORSブロックを回避してデータを取得する
+    const fetchTemplates = () => {
       isLoading.value = true;
-      try {
-        const response = await fetch(GAS_API_URL);
-        const data = await response.json();
+      
+      // グローバルに関数を定義してGASから呼び出してもらう
+      window.handleResponse = (data) => {
         templates.value = data;
-      } catch (err) {
-        alert("データの読み込みに失敗しました。");
-      } finally {
         isLoading.value = false;
-      }
+        // 使い終わったscriptタグを掃除
+        const scriptTag = document.getElementById('jsonp-script');
+        if (scriptTag) scriptTag.remove();
+      };
+
+      // 動的に <script> タグを生成してページに埋め込む（CORS制限を受けない）
+      const oldScript = document.getElementById('jsonp-script');
+      if (oldScript) oldScript.remove();
+
+      const script = document.createElement('script');
+      script.id = 'jsonp-script';
+      script.src = `${GAS_API_URL}?callback=handleResponse`;
+      script.onerror = () => {
+        isLoading.value = false;
+        alert("データの読み込みに失敗しました。");
+      };
+      document.body.appendChild(script);
     };
 
     onMounted(() => {
