@@ -11,20 +11,16 @@ createApp({
     const editingId = ref(null);
     const editForm = ref({ id: null, title: '', content: '' });
 
-    // JSONPを使ってCORSブロックを回避してデータを取得する
+    // JSONPを使った安全な読み込み
     const fetchTemplates = () => {
       isLoading.value = true;
-      
-      // グローバルに関数を定義してGASから呼び出してもらう
       window.handleResponse = (data) => {
         templates.value = data;
         isLoading.value = false;
-        // 使い終わったscriptタグを掃除
         const scriptTag = document.getElementById('jsonp-script');
         if (scriptTag) scriptTag.remove();
       };
 
-      // 動的に <script> タグを生成してページに埋め込む（CORS制限を受けない）
       const oldScript = document.getElementById('jsonp-script');
       if (oldScript) oldScript.remove();
 
@@ -68,6 +64,22 @@ createApp({
       editingId.value = null;
     };
 
+    // 保存処理（CORSエラーを避けるため no-cors モードを利用）
+    const saveToSpreadsheet = async (dataToSave) => {
+      // データの文字列をURLエンコードしてPOSTする（プリフライトを回避）
+      const formData = new URLSearchParams();
+      formData.append("data", JSON.stringify(dataToSave));
+
+      await fetch(GAS_API_URL, {
+        method: "POST",
+        mode: "no-cors", // CORSのエラーを強制回避するテクニック
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData
+      });
+    };
+
     const saveEdit = async () => {
       if(!editForm.value.title || !editForm.value.content) {
         alert("タイトルと本文を入力してください。");
@@ -83,11 +95,10 @@ createApp({
       }
 
       try {
-        await fetch(GAS_API_URL, {
-          method: "POST",
-          body: JSON.stringify(templates.value)
-        });
+        await saveToSpreadsheet(templates.value);
         showToast('スプレッドシートに保存しました');
+        // 少し待ってから最新データを再読み込み
+        setTimeout(fetchTemplates, 1500);
       } catch (err) {
         alert("保存に失敗しました。");
       } finally {
@@ -101,11 +112,9 @@ createApp({
         templates.value.splice(index, 1);
         isSaving.value = true;
         try {
-          await fetch(GAS_API_URL, {
-            method: "POST",
-            body: JSON.stringify(templates.value)
-          });
+          await saveToSpreadsheet(templates.value);
           showToast('削除しました');
+          setTimeout(fetchTemplates, 1500);
         } catch (err) {
           alert("削除に失敗しました。");
         } finally {
