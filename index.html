@@ -42,46 +42,47 @@
         <p>スプレッドシートから読み込み中...</p>
       </div>
 
-      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+      <!-- スマホでも画面幅に関係なく強制的に横3列 (grid-cols-3) -->
+      <div v-else class="grid grid-cols-3 gap-3">
         <div v-for="(tpl, index) in templates" :key="tpl.id" class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col">
           
           <div v-if="editingId !== tpl.id" class="flex flex-col h-full">
-            <div class="bg-gray-50 px-3 py-2 border-b border-gray-200 flex justify-between items-center">
-              <h2 class="text-sm font-bold text-gray-800 truncate">{{ tpl.title }}</h2>
-              <button @click="startEdit(tpl)" class="text-gray-400 hover:text-indigo-500 transition p-1" title="編集">
-                <i class="fa-solid fa-pen text-xs"></i>
-              </button>
+            <!-- 上部：タイトル ＋ 小さめコピーボタン ＋ 編集ボタンをまとめる -->
+            <div class="bg-gray-50 px-2.5 py-2 border-b border-gray-200 flex justify-between items-center gap-1">
+              <h2 class="text-xs font-bold text-gray-800 truncate">{{ tpl.title }}</h2>
+              <div class="flex items-center space-x-1 shrink-0">
+                <button @click="copyText(tpl.content)" class="bg-blue-500 hover:bg-blue-600 text-white px-2 py-1 rounded text-[10px] font-semibold shadow-sm transition flex items-center">
+                  <i class="fa-regular fa-copy mr-1"></i>コピー
+                </button>
+                <button @click="startEdit(tpl)" class="text-gray-400 hover:text-indigo-500 transition p-1" title="編集">
+                  <i class="fa-solid fa-pen text-xs"></i>
+                </button>
+              </div>
             </div>
             
             <div class="p-2.5 flex-grow">
-              <div class="text-xs text-gray-700 whitespace-pre-wrap leading-relaxed h-32 overflow-y-auto bg-gray-50 p-2 rounded border border-gray-100">{{ tpl.content }}</div>
-            </div>
-            
-            <div class="px-2.5 pb-2.5">
-              <button @click="copyText(tpl.content)" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-3 rounded-md shadow-sm transition duration-200 flex justify-center items-center text-sm">
-                <i class="fa-regular fa-copy mr-1.5"></i> コピー
-              </button>
+              <div class="text-[11px] text-gray-700 whitespace-pre-wrap leading-relaxed h-32 overflow-y-auto bg-gray-50 p-2 rounded border border-gray-100">{{ tpl.content }}</div>
             </div>
           </div>
 
           <div v-else class="flex flex-col h-full bg-indigo-50">
             <div class="px-3 pt-3 pb-1.5">
               <label class="block text-[10px] font-bold text-indigo-700 mb-0.5">タイトル</label>
-              <input v-model="editForm.title" type="text" class="w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-1.5 text-sm" placeholder="メールの種類">
+              <input v-model="editForm.title" type="text" class="w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-1.5 text-xs" placeholder="メールの種類">
             </div>
             
             <div class="px-3 pb-1.5 flex-grow">
               <label class="block text-[10px] font-bold text-indigo-700 mb-0.5">本文</label>
-              <textarea v-model="editForm.content" class="w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2 h-32 text-xs leading-relaxed" placeholder="メールの本文を入力"></textarea>
+              <textarea v-model="editForm.content" class="w-full border-gray-300 rounded shadow-sm focus:ring-indigo-500 focus:border-indigo-500 p-2 h-32 text-[11px] leading-relaxed" placeholder="メールの本文を入力"></textarea>
             </div>
             
             <div class="px-3 pb-3 pt-1 flex justify-between items-center space-x-2">
               <button @click="deleteTemplate(index)" class="text-red-500 hover:bg-red-100 p-1.5 rounded transition" title="削除">
-                <i class="fa-solid fa-trash text-sm"></i>
+                <i class="fa-solid fa-trash text-xs"></i>
               </button>
-              <div class="flex space-x-2">
-                <button @click="cancelEdit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1.5 px-3 rounded text-xs transition duration-200">キャンセル</button>
-                <button @click="saveEdit" :disabled="isSaving" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1.5 px-4 rounded shadow-sm text-xs transition duration-200">
+              <div class="flex space-x-1.5">
+                <button @click="cancelEdit" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-1 px-2.5 rounded text-[11px] transition duration-200">キャンセル</button>
+                <button @click="saveEdit" :disabled="isSaving" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-1 px-3 rounded shadow-sm text-[11px] transition duration-200">
                   <span v-if="isSaving"><i class="fa-solid fa-spinner fa-spin"></i></span>
                   <span v-else>保存</span>
                 </button>
