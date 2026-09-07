@@ -1,6 +1,5 @@
 const { createApp, ref, onMounted } = Vue;
 
-// ★ここに手順1で取得したGASのウェブアプリのURLを貼り付けてください
 const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw8z_FiLZu7dc1wYYbzTRBlmdSJ_Ji5P4W08bEPqAULETiw1MHghPn5ZJsaxcY8OuQIHQ/exec";
 
 createApp({
@@ -12,7 +11,6 @@ createApp({
     const editingId = ref(null);
     const editForm = ref({ id: null, title: '', content: '' });
 
-    // スプレッドシートからデータを取得
     const fetchTemplates = async () => {
       isLoading.value = true;
       try {
@@ -70,7 +68,6 @@ createApp({
         templates.value[index] = { ...editForm.value };
       }
 
-      // スプレッドシートへ保存（同期）
       try {
         await fetch(GAS_API_URL, {
           method: "POST",
